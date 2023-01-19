@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://bitcoincore.tech/apps/bitcoinjs-ui/lib/bitcoinjs-lib.js"></script>
+    <script>
+        var sha256  = bitcoinjs.crypto.sha256
+        var haveNostr = false
+        function waitForNostr(callback) {
+            var interval = setInterval(function () {
+                if (window.nostr) {
+                    haveNostr = true
+                    clearInterval(interval);
+                    callback();
+                }
+            }, 200);
+        }
+        async function getPubkey() {
+            return await window.nostr.getPublicKey()
+        }
+        waitForNostr(function () {
+            window.nostr.getPublicKey().then(k => {
+                console.log(k)
+                testSignEvent(k).then(signed => {
+
+                    console.log(JSON.stringify(signed))
+                })
+            })
+        })
+        async function testSignEvent(pubkey) {
+            console.log()
+            var now = Math.floor( Date.now() / 1000 );
+            var event = {
+                "content"    : "test note",
+                "created_at" : now,
+                "kind"       : 1,
+                "tags"       : [],
+                "pubkey"     : pubkey,
+            }
+            console.log()
+            return await signEvent( event );
+        }
+
+        async function signEvent(event) {
+            var eventArray = [
+                0,                    // Reserved for future use
+                event['pubkey'],        // The sender's public key
+                event['created_at'],    // Unix timestamp
+                event['kind'],        // Message “kind” or type
+                event['tags'],        // Tags identify replies/recipients
+                event['content']        // Your note contents
+            ];
+            var eventData = JSON.stringify( eventArray );
+            event.id  = sha256( eventData ).toString( 'hex' )
+            if (haveNostr) {
+                var signedEvent = await window.nostr.signEvent( event );
+                if ( typeof( signedEvent ) == "string" ) {
+                    event.sig = signedEvent;
+                } else {
+                    event.sig = signedEvent.sig;
+                }
+                return event
+            }
+        }
+    </script>
+</head>
+<body>
+
+</body>
+</html>

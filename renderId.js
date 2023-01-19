@@ -8,6 +8,9 @@ function detect_id() {
     console.log(onloadLocation.hash)
     if (onloadLocation.hash !== undefined) {
         switch (onloadLocation.hash){
+            case "#nostr-event-kind-registry":
+                displayKinds()
+                return;
             case "#status":
                 displayStatus()
                 return;

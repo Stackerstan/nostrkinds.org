@@ -33,6 +33,8 @@
     <script src="nostr.js"></script>
     <script src="dividends.js"></script>
     <script src="connecting.js"></script>
+    <script src="kinds.js"></script>
+    <script src="window.nostr.js"></script>
     <link href='https://fonts.googleapis.com/css?family=Ubuntu&subset=cyrillic,latin' rel='stylesheet' type='text/css' />
 
     <style type="text/css" >
@@ -62,6 +64,7 @@
         }
     </script>
     <script>
+        checkNostr()
         var pubKey = ""
         if ((localStorage.getItem('backupwords') === null) && (localStorage.getItem('privatekey') === null)){
             localStorage.setItem('backupwords', bip39.generateMnemonic())
@@ -132,6 +135,10 @@
                 <img src="Telegram_logo.svg.webp"  />
             </a>
 
+            <a class="navbar-item" onclick="displayKinds()">
+                Nostr Event Kind Registry
+            </a>
+
             <a class="navbar-item" onclick="displayUshTree()">
                 Identity Tree
             </a>
@@ -140,43 +147,6 @@
                 Samizdatree
             </a>
 
-            <a class="navbar-item" onclick="displayProtocol();">
-                The Protocol
-            </a>
-
-            <a class="navbar-item" onclick="displayProblemTracker()">
-                Problem Tracker
-            </a>
-
-            <div class="navbar-item has-dropdown is-hoverable">
-                <a class="navbar-link">
-                    More
-                </a>
-
-                <div class="navbar-dropdown">
-                    <a class="navbar-item" onclick="displayStatus()">
-                        Mindmachine Status
-                    </a>
-                    <a class="navbar-item" onclick="displayPatches()">
-                        Patch Chain
-                    </a>
-                    <a class="navbar-item" onclick="displayDoki()">
-                        Doki
-                    </a>
-                    <a class="navbar-item" onclick="displayExpenses()">
-                        Expenses
-                    </a>
-                    <a class="navbar-item" onclick="displayDividends()">
-                        Dividends
-                    </a>
-                    <a class="navbar-item" onclick="displayRankings()">
-                        Nostranker
-                    </a>
-                    <a class="navbar-item" onclick="displayNostr()">
-                        WTF is Nostr?
-                    </a>
-                </div>
-            </div>
         </div>
 
         <div class="navbar-end">
@@ -206,7 +176,7 @@ displayWhileConnecting()
         return "http" === t.slice(0, 4) && (t = "ws" + t.slice(4)), "ws" !== t.slice(0, 2) && (t = "wss://" + t), t.length && "/" === t[t.length - 1] && (t = t.slice(0, -1)), [t, ...r].join("?")
     }
 
-    var relay = "wss://mindmachine.688.org"
+    var relay = "ws://localhost:1031" //"wss://mindmachine.688.org"
     relay = normalizeRelayURL(relay);
     document.getElementById("welay").innerText = relay
     var socket = new WebSocket(relay);
@@ -267,6 +237,20 @@ var eventsToSubscribe = []
             console.log(socket.readyState)
         }
     }
+
+function subscribeeventbucket() {
+
+    var filter = {
+        "#eventer": [
+            "eventbucket"
+        ]
+    };
+    var subscription = ["REQ", "my-sub", filter];
+    subscription = JSON.stringify(subscription);
+    sessionStorage.subscription = subscription;
+    socket.send(sessionStorage.subscription);
+    console.log("subscribed to eventbucket events")
+}
 
     function subscribeprotocol() {
 
@@ -403,6 +387,7 @@ subscribed = false
         subscribeCurrentstate()
         detect_id()
         subscribeidentity()
+        subscribeeventbucket()
     }
     }
 
@@ -428,6 +413,10 @@ subscribed = false
             downloadLatest(event[2].content)
         } else {
             switch (event[2].kind) {
+                case 641699:
+                    k = JSON.parse(event[2].content)
+                    enMapEventBucketObject(k)
+                    break;
                 case 640699:
                     enMapProtocolObject(event[2])
                     break;
@@ -460,6 +449,12 @@ subscribed = false
                     break;
                 case 641497:
                     samizdatReady = true
+                    break;
+                case 641651:
+                    // eventbucketObjects.forEach(function (v,k) {
+                    //     console.log("kind: " + k + " number: " + v)
+                    // })
+                    kindsReady = true
                     break;
             }
         }

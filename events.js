@@ -11,7 +11,7 @@ function waitForRelaySocketReady(callback) {
     }, 200);
 }
 function enMapIdentityObject(e) {
-    console.log(e.content)
+    //console.log(e.content)
     c = JSON.parse(e.content)
     //console.log(c)
     identityObjects.set(c.Account, c)
@@ -24,6 +24,12 @@ function enMapProtocolObject(e) {
     e.mindmachineUID = getMindmachineUID(e)
     protocolObjects.set(e.mindmachineUID, e)
     subscribeToReplies(e)
+}
+
+const eventbucketObjects = new Map();
+
+function enMapEventBucketObject(e) {
+    eventbucketObjects.set(e.Kind, e.Count)
 }
 
 const problemObjects = new Map();
